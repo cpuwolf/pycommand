@@ -15,7 +15,7 @@ redirect prompt command stdout,stderr to Qt GUI
 import os
 import sys
 from PyQt4 import QtCore, QtGui, uic
-from PyQt4.QtCore import QThread
+from PyQt4.QtCore import QThread, QDir
 from PyQt4.QtGui import QFileDialog
 import ConfigParser
 import subprocess
@@ -139,7 +139,8 @@ class MyApp(QtGui.QMainWindow, Ui_MainWindow):
         self.mycnf.writeconfig(self.lineEditvalue.text())
         
     def getfile(self):
-        self.lineEditvalue.setText(QFileDialog.getOpenFileName(self, 'Open file', self.lineEditvalue.text(),"text files (*.txt *.*)"))
+        path=QFileDialog.getOpenFileName(self, 'Open file', self.lineEditvalue.text(),"text files (*.txt *.*)")
+        self.lineEditvalue.setText(QDir.toNativeSeparators(path))
         self.upconfig()
 
 
