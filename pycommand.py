@@ -33,6 +33,7 @@ class MyConfig:
         self.text_valuepath = None
         self.cmdstart = None
         self.cmdend = None
+        self.readconfig()
         
     def readconfig(self):
         config = ConfigParser.RawConfigParser()
@@ -69,18 +70,19 @@ def read_stderr(pipe,q):
 class MyThread(QThread):
     set_text = QtCore.pyqtSignal('QString')
     set_done = QtCore.pyqtSignal()
-    text_valuepath = None
-    cmdstart = None
-    cmdend = None
+
     def __init__(self):
         QThread.__init__(self)
-
+        self.mycnf=MyConfig()
         self.textQ = Queue.Queue()
+
     def __del__(self):
+        self.textQ.put(None)
         self.wait()
+
     def run(self):
         self.set_text.emit("<h1>Go</h1>")
-        cmd = self.cmdstart+' '+self.text_valuepath+' '+self.cmdend
+        cmd = self.mycnf.cmdstart+' '+self.text_valuepath+' '+self.mycnf.cmdend
         self.set_text.emit("<h3>"+cmd+"<h3>")
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         tout = threading.Thread(target=read_stdout, args=[p.stdout,self.textQ])
@@ -114,16 +116,15 @@ class MyApp(QtGui.QMainWindow, Ui_MainWindow):
         self.pushButtonfix.clicked.connect(self.GoCrazy)
         self.pushButtonValue.clicked.connect(self.getfile)
         self.mycnf=MyConfig()
-        a = self.mycnf.readconfig()
-        self.lineEditvalue.setText(a[0])
+        self.lineEditvalue.setText(self.mycnf.text_valuepath)
     
     def GoCrazy(self):
         #print "start"
-        a=self.mycnf.readconfig()
+        self.mycnf.readconfig()
         self.myThread = MyThread()
         self.myThread.text_valuepath = unicode(self.lineEditvalue.text())
-        self.myThread.cmdstart = a[1]
-        self.myThread.cmdend = a[2]
+        self.myThread.cmdstart = self.mycnf.cmdstart
+        self.myThread.cmdend = self.mycnf.cmdend
         self.myThread.set_text.connect(self.on_set_text)
         self.myThread.set_done.connect(self.on_set_done)
         self.pushButtonfix.setEnabled(False)
